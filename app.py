@@ -8,17 +8,19 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "secretkey123"
 
-db = mysql.connector.connect(
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    database=os.getenv("DB_NAME")
-)
+def get_db_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
+    )
 
-cursor = db.cursor()
 @app.route('/')
 def index():
+    db = get_db_connection()
+    cursor = db.cursor()                            
     cursor.execute("SELECT * FROM slots")
     slots = cursor.fetchall()
     return render_template("index.html", slots=slots)
@@ -26,7 +28,8 @@ def index():
 
 @app.route('/book/<int:id>')
 def book(id):
-
+    db = get_db_connection()
+    cursor = db.cursor()
     cursor.execute("SELECT status FROM slots WHERE id=%s", (id,))
     status = cursor.fetchone()
 
@@ -41,6 +44,8 @@ def book(id):
 
 @app.route('/cancel/<int:id>')
 def cancel(id):
+    db = get_db_connection()
+    cursor = db.cursor()
 
     cursor.execute("UPDATE slots SET status='Available' WHERE id=%s", (id,))
     db.commit()
@@ -51,7 +56,9 @@ def cancel(id):
 
 @app.route('/booked')
 def booked():
-
+    db = get_db_connection()
+    cursor = db.cursor()
+    
     cursor.execute("SELECT * FROM slots WHERE status='Booked'")
     slots = cursor.fetchall()
 
