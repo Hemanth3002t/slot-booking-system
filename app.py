@@ -1,28 +1,27 @@
 from flask import Flask, render_template, redirect, flash
 import mysql.connector
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "secretkey123"
 
+
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Hemanth@353",
-    database="slot_booking"
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME")
 )
 
 cursor = db.cursor()
-
-
 
 @app.route('/')
 def index():
     cursor.execute("SELECT * FROM slots")
     slots = cursor.fetchall()
     return render_template("index.html", slots=slots)
-
-
-
 @app.route('/book/<int:id>')
 def book(id):
 
@@ -33,7 +32,6 @@ def book(id):
         cursor.execute("UPDATE slots SET status='Booked' WHERE id=%s", (id,))
         db.commit()
         flash("Slot booked successfully!")
-
     else:
         flash("Slot already booked.")
 
@@ -50,8 +48,6 @@ def cancel(id):
     flash("Slot cancelled successfully!")
 
     return redirect('/')
-
-
 
 @app.route('/booked')
 def booked():
